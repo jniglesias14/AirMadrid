@@ -1,0 +1,1100 @@
+create table terminales(
+	id char(2) primary key,
+	descripción varchar(50)
+);
+
+CREATE TABLE puertas_embarques (
+    id CHAR(2),
+    id_terminal CHAR(2),
+    estado VARCHAR(50) DEFAULT 'open',
+    PRIMARY KEY (id, id_terminal),
+    CONSTRAINT id_terminal_fk1 FOREIGN KEY (id_terminal) REFERENCES terminales(id) ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT estado_chk CHECK (estado IN ('open', 'closed', 'boarding in process'))
+);
+
+create table paises(
+	id char(3) primary key,
+	nombre varchar(25)
+);
+
+ALTER TABLE paises
+ADD continente varchar(20);
+
+create table ciudades(
+	id char(3),
+	id_pais char(3),
+	nombre varchar(25),
+	primary key(id, id_pais),
+	constraint id_pais_fk1 foreign key(id_pais) references paises(id) ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+create table aerolíneas(
+	id int primary key,
+	nombre varchar(50),
+	enlace_web varchar(100),
+	id_pais char(3),
+	constraint fk1 foreign key(id_pais) references paises(id) ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+create table aviones(
+	id varchar(10),
+	id_aerolinea int,
+	fecha_fab date,
+	capacidad int,
+	modelo varchar(50),
+	primary key(id,id_aerolinea),
+	constraint id_aerolinea_fk1 foreign key(id_aerolinea) references aerolíneas(id) ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+create table asientos(
+	numero int,
+	letra char(1),
+	id_avion varchar(10),
+	id_aerolinea int,
+	primary key(numero,letra,id_avion,id_aerolinea),
+	constraint id_fk1 foreign key(id_avion,id_aerolinea) references aviones(id,id_aerolinea) ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+create table vuelos(
+	id varchar(20) primary key,
+	fecha_salida DATETIME not null,
+	fecha_llegada DATETIME not null,
+	estado VARCHAR(50) DEFAULT 'Scheduled',
+	id_puerta_embarque char(2),
+	id_terminal char(2),
+	id_pais_origen char(3) not null,
+	id_ciudad_origen char(3) not null,
+	id_pais_destino char(3) not null,
+	id_ciudad_destino char(3) not null,
+	observaciones text,
+	id_avion varchar(10) not null,
+	id_aerolinea int not null, 
+	constraint id1_fk1 foreign key(id_puerta_embarque,id_terminal) references puertas_embarques(id,id_terminal) ON UPDATE CASCADE
+        ON DELETE CASCADE,
+	constraint id2_fk2 foreign key(id_ciudad_origen,id_pais_origen) references ciudades(id,id_pais),
+	constraint id2_fk3 foreign key(id_ciudad_destino,id_pais_destino) references ciudades(id,id_pais),
+	constraint id_avion_fk4 foreign key(id_avion,id_aerolinea) references aviones(id,id_aerolinea) ON UPDATE CASCADE
+        ON DELETE CASCADE, 
+	CONSTRAINT estado_chk1 CHECK (estado IN ('Scheduled', 'About to depart', 'Awaiting', 'In flight', 'Landed', 'Cancelled', 'Diversion', 'At gate', 'Boarding completed', 'In boarding process'))
+);
+
+
+create table asientos_vuelos(
+	id int IDENTITY(1,1) primary key,
+	numero int not null,
+	letra char(1) not null,
+	id_avion varchar(10) not null,
+	id_aerolinea int not null,
+	tipo varchar(50) default 'economy',
+	id_vuelo varchar(20),
+	precio decimal,
+	estado varchar(50) default 'available',
+	constraint asiento_fk1 foreign key(numero,letra,id_avion,id_aerolinea) references 	asientos(numero,letra,id_avion,id_aerolinea) ON UPDATE CASCADE
+        ON DELETE CASCADE,
+	constraint vuelo_fk2 foreign key(id_vuelo) references vuelos(id) ON UPDATE CASCADE
+        ON DELETE CASCADE,
+	CONSTRAINT tipo_chk CHECK (tipo IN ('economy', 'first class', 'business')),
+	CONSTRAINT estado_chk2 CHECK (estado IN ('available', 'occupied', 'unavailable'))
+);
+	
+
+
+create table usuarios(
+	dni char(9) primary key,
+	nombre varchar(50),
+	apellido1 varchar(50),
+	apellido2 varchar(50),
+	fecha_nac date,
+	teléfono char(9),
+	email varchar(50),
+	nombre_usuario varchar(50) unique,
+	password varchar(50) not null,
+	codigo_rec int
+);
+
+create table reservas(
+	id int IDENTITY(1,1) primary key,
+	dni_usuario char(9),
+	id_asiento_vuelo int not null,
+	fecha datetime,
+	nombre varchar(50),
+	dni char(9),
+	email varchar(50),
+	apellido1 varchar(50),
+	apellido2 varchar(50),
+	teléfono char(9),
+	constraint usuario_fk1 foreign key(dni_usuario) references usuarios(dni),
+	constraint asiento_fk2 foreign key(id_asiento_vuelo) references asientos_vuelos(id)
+	
+);
+
+
+
+create table notificaciones_vuelos(
+	id int IDENTITY(1,1) primary key,
+	id_vuelo varchar(20),
+	fecha datetime,
+	titulo varchar(100),
+	descripción text,
+	constraint vuelo_fk1 foreign key(id_vuelo) references vuelos(id),
+	
+);
+
+
+
+
+
+
+
+INSERT INTO terminales (id, descripción) VALUES
+('T1', 'Terminal 1 Vuelos nacionales'),
+('T2', 'Terminal 2 Vuelos europeos'),
+('T3', 'Terminal 3 Vuelos internacionales'),
+('T4', 'Terminal 4 Vuelos internacionales');
+
+
+
+
+INSERT INTO puertas_embarques (id, id_terminal, estado) VALUES
+('A1', 'T1', 'open'),
+('A2', 'T1', 'open'),
+('A3', 'T1', 'open'),
+('B1', 'T1', 'open'),
+('B2', 'T1', 'open'),
+('B3', 'T1', 'open'),
+('C1', 'T2', 'open'),
+('C2', 'T2', 'open'),
+('C3', 'T2', 'open'),
+('D1', 'T2', 'open'),
+('D2', 'T2', 'open'),
+('D3', 'T2', 'open'),
+('E1', 'T3', 'open'),
+('E2', 'T3', 'open'),
+('E3', 'T3', 'open'),
+('F1', 'T3', 'open'),
+('F2', 'T3', 'open'),
+('F3', 'T3', 'open'),
+('G1', 'T3', 'open'),
+('G2', 'T3', 'open'),
+('G3', 'T3', 'open'),
+('H1', 'T3', 'open'),
+('H2', 'T3', 'open'),
+('H3', 'T3', 'open'),
+('I1', 'T4', 'open'),
+('I2', 'T4', 'open'),
+('I3', 'T4', 'open'),
+('J1', 'T4', 'open'),
+('J2', 'T4', 'open'),
+('J3', 'T4', 'open'),
+('K1', 'T4', 'open'),
+('K2', 'T4', 'open'),
+('K3', 'T4', 'open'),
+('L1', 'T4', 'open'),
+('L2', 'T4', 'open'),
+('L3', 'T4', 'open'),
+('M1', 'T4', 'open'),
+('M2', 'T4', 'open'),
+('M3', 'T4', 'open'),
+('N1', 'T4', 'open'),
+('N2', 'T4', 'open'),
+('N3', 'T4', 'open');
+
+
+
+
+
+INSERT INTO paises (id, nombre, continente) VALUES
+('ARG', 'Argentina', 'America'),
+('BRA', 'Brasil', 'America'),
+('CHL', 'Chile', 'America'),
+('URY', 'Uruguay', 'America'),
+('COL', 'Colombia', 'America'),
+('ECU', 'Ecuador', 'America'),
+('PER', 'Perú', 'America'),
+('BOL', 'Bolivia', 'America'),
+('VEN', 'Venezuela', 'America'),
+('MEX', 'México', 'America'),
+('USA', 'Estados Unidos', 'America'),
+('CAN', 'Canadá', 'America'),
+('ESP', 'España', 'Europe'),
+('FRA', 'Francia', 'Europe'),
+('ITA', 'Italia', 'Europe'),
+('ALE', 'Alemania', 'Europe'),
+('ING', 'Reino Unido', 'Europe'),
+('BEL', 'Bélgica', 'Europe'),
+('NED', 'Países Bajos', 'Europe'),
+('POR', 'Portugal', 'Europe'),
+('RUS', 'Rusia', 'Europe'),
+('JPN', 'Japón', 'Asia'),
+('CHN', 'China', 'Asia'),
+('IND', 'India', 'Asia'),
+('AUS', 'Australia', 'Oceania');
+
+
+
+
+
+INSERT INTO ciudades (id, id_pais, nombre) VALUES
+('BAS', 'ARG', 'Buenos Aires'),
+('ROS', 'ARG', 'Rosario'),
+('RIB', 'BRA', 'Río de Janeiro'),
+('SAO', 'BRA', 'São Paulo'),
+('SCL', 'CHL', 'Santiago'),
+('VIV', 'CHL', 'Valparaíso'),
+('MVD', 'URY', 'Montevideo'),
+('QUI', 'ECU', 'Quito'),
+('LIM', 'PER', 'Lima'),
+('CBB', 'BOL', 'Cochabamba'),
+('CAR', 'VEN', 'Caracas'),
+('CMX', 'MEX', 'Ciudad de México'),
+('GDL', 'MEX', 'Guadalajara'),
+('NYC', 'USA', 'Nueva York'),
+('LA', 'USA', 'Los Ángeles'),
+('TOR', 'CAN', 'Toronto'),
+('OTW', 'CAN', 'Ottawa'),
+('MAD', 'ESP', 'Madrid'),
+('BAR', 'ESP', 'Barcelona'),
+('PAR', 'FRA', 'París'),
+('ROM', 'ITA', 'Roma'),
+('BER', 'ALE', 'Berlín'),
+('LON', 'ING', 'Londres'),
+('BRU', 'BEL', 'Bruselas'),
+('AMS', 'NED', 'Ámsterdam');
+
+
+
+
+
+INSERT INTO aerolíneas (id,nombre, enlace_web, id_pais) VALUES
+(1,'Aerolineas Argentinas', 'https://www.aerolineas.com.ar', 'ARG'),
+(2,'Gol Linhas Aéreas', 'https://www.voegol.com.br', 'BRA'),
+(3,'LATAM Airlines', 'https://www.latam.com', 'CHL'),
+(4,'Avianca', 'https://www.avianca.com', 'COL'),
+(5,'Azul Linhas Aéreas', 'https://www.voeazul.com.br', 'BRA'),
+(6,'Sky Airline', 'https://www.skyairline.com', 'CHL'),
+(7,'Aeroméxico', 'https://www.aeromexico.com', 'MEX'),
+(8,'Interjet', 'https://www.interjet.com.mx', 'MEX'),
+(9,'JetBlue Airways', 'https://www.jetblue.com', 'USA'),
+(10,'American Airlines', 'https://www.aa.com', 'USA'),
+(11,'United Airlines', 'https://www.united.com', 'USA'),
+(12,'Delta Airlines', 'https://www.delta.com', 'USA'),
+(13,'British Airways', 'https://www.britishairways.com', 'ING'),
+(14,'Lufthansa', 'https://www.lufthansa.com', 'ALE'),
+(15,'Air France', 'https://www.airfrance.com', 'FRA'),
+(16,'KLM Royal Dutch Airlines', 'https://www.klm.com', 'NED'),
+(17,'Ryanair', 'https://www.ryanair.com', 'ING'),
+(18,'Iberia', 'https://www.iberia.com', 'ESP'),
+(19,'Swiss International Air Lines', 'https://www.swiss.com', 'ALE'),
+(20,'Alitalia', 'https://www.alitalia.com', 'ITA');
+
+
+
+
+INSERT INTO aviones (id, id_aerolinea, fecha_fab, capacidad, modelo) VALUES
+('A001', 1, '2015-06-12', 180, 'Boeing 737'),
+('A002', 1, '2017-08-24', 220, 'Airbus A320'),
+('A003', 2, '2016-04-10', 200, 'Embraer E190'),
+('A004', 2, '2018-05-19', 220, 'Boeing 737'),
+('A005', 3, '2014-02-02', 240, 'Airbus A321'),
+('A006', 3, '2019-03-14', 250, 'Boeing 787'),
+('A007', 4, '2012-11-07', 150, 'Airbus A319'),
+('A008', 4, '2020-09-21', 180, 'Airbus A320'),
+('A009', 5, '2013-06-18', 200, 'Boeing 747'),
+('A010', 5, '2021-01-25', 250, 'Boeing 787'),
+('A011', 6, '2016-09-04', 160, 'Airbus A320'),
+('A012', 6, '2020-12-01', 180, 'Boeing 737'),
+('A013', 7, '2015-03-19', 220, 'Embraer E195'),
+('A014', 7, '2017-07-23', 250, 'Boeing 787'),
+('A015', 8, '2014-02-15', 190, 'Airbus A320'),
+('A016', 8, '2020-11-09', 210, 'Boeing 737'),
+('A017', 9, '2018-07-11', 240, 'Boeing 787'),
+('A018', 9, '2016-05-30', 220, 'Airbus A321'),
+('A019', 10, '2011-09-13', 210, 'Boeing 777'),
+('A020', 10, '2020-02-22', 230, 'Boeing 737'),
+('A021', 11, '2017-06-19', 180, 'Airbus A320'),
+('A022', 11, '2021-04-05', 200, 'Embraer E190'),
+('A023', 12, '2019-08-28', 220, 'Boeing 787'),
+('A024', 12, '2014-12-05', 240, 'Airbus A321'),
+('A025', 13, '2015-01-30', 230, 'Airbus A350'),
+('A026', 13, '2020-11-09', 210, 'Boeing 737'),
+('A027', 14, '2018-07-11', 240, 'Boeing 787'),
+('A028', 14, '2016-05-30', 220, 'Airbus A321'),
+('A029', 18, '2011-09-13', 210, 'Boeing 777'),
+('A030', 18, '2020-02-22', 230, 'Boeing 737'),
+('A031', 18, '2017-06-19', 180, 'Airbus A320'),
+('A032', 18, '2021-04-05', 200, 'Embraer E190'),
+('A033', 18, '2019-08-28', 220, 'Boeing 787'),
+('A034', 18, '2014-12-05', 240, 'Airbus A321'),
+('A035', 18, '2015-01-30', 230, 'Airbus A350');
+
+-- Asientos para el avión A001 (Boeing 737)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A001', 1),
+(2, 'A', 'A001', 1),
+(3, 'A', 'A001', 1),
+(4, 'A', 'A001', 1),
+(5, 'A', 'A001', 1),
+(6, 'A', 'A001', 1),
+(7, 'A', 'A001', 1),
+(8, 'A', 'A001', 1),
+(9, 'A', 'A001', 1),
+(10, 'A', 'A001', 1),
+(11, 'B', 'A001', 1),
+(12, 'B', 'A001', 1),
+(13, 'B', 'A001', 1),
+(14, 'B', 'A001', 1),
+(15, 'B', 'A001', 1),
+(16, 'B', 'A001', 1),
+(17, 'B', 'A001', 1),
+(18, 'B', 'A001', 1),
+(19, 'B', 'A001', 1),
+(20, 'B', 'A001', 1),
+(21, 'C', 'A001', 1),
+(22, 'C', 'A001', 1),
+(23, 'C', 'A001', 1),
+(24, 'C', 'A001', 1),
+(25, 'C', 'A001', 1),
+(26, 'C', 'A001', 1),
+(27, 'C', 'A001', 1),
+(28, 'C', 'A001', 1),
+(29, 'C', 'A001', 1),
+(30, 'C', 'A001', 1);
+
+
+-- Asientos para el avión A002 (Airbus A320)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A002', 1),
+(2, 'A', 'A002', 1),
+(3, 'A', 'A002', 1),
+(4, 'A', 'A002', 1),
+(5, 'A', 'A002', 1),
+(6, 'A', 'A002', 1),
+(7, 'A', 'A002', 1),
+(8, 'A', 'A002', 1),
+(9, 'A', 'A002', 1),
+(10, 'A', 'A002', 1),
+(11, 'B', 'A002', 1),
+(12, 'B', 'A002', 1),
+(13, 'B', 'A002', 1),
+(14, 'B', 'A002', 1),
+(15, 'B', 'A002', 1),
+(16, 'B', 'A002', 1),
+(17, 'B', 'A002', 1),
+(18, 'B', 'A002', 1),
+(19, 'B', 'A002', 1),
+(20, 'B', 'A002', 1),
+(21, 'C', 'A002', 1),
+(22, 'C', 'A002', 1),
+(23, 'C', 'A002', 1),
+(24, 'C', 'A002', 1),
+(25, 'C', 'A002', 1),
+(26, 'C', 'A002', 1),
+(27, 'C', 'A002', 1),
+(28, 'C', 'A002', 1),
+(29, 'C', 'A002', 1),
+(30, 'C', 'A002', 1);
+
+
+-- Asientos para el avión A003 (Embraer E190)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A003', 2),
+(2, 'A', 'A003', 2),
+(3, 'A', 'A003', 2),
+(4, 'A', 'A003', 2),
+(5, 'A', 'A003', 2),
+(6, 'A', 'A003', 2),
+(7, 'A', 'A003', 2),
+(8, 'A', 'A003', 2),
+(9, 'A', 'A003', 2),
+(10, 'A', 'A003', 2),
+(11, 'B', 'A003', 2),
+(12, 'B', 'A003', 2),
+(13, 'B', 'A003', 2),
+(14, 'B', 'A003', 2),
+(15, 'B', 'A003', 2),
+(16, 'B', 'A003', 2),
+(17, 'B', 'A003', 2),
+(18, 'B', 'A003', 2),
+(19, 'B', 'A003', 2),
+(20, 'B', 'A003', 2),
+(21, 'C', 'A003', 2),
+(22, 'C', 'A003', 2),
+(23, 'C', 'A003', 2),
+(24, 'C', 'A003', 2),
+(25, 'C', 'A003', 2),
+(26, 'C', 'A003', 2),
+(27, 'C', 'A003', 2),
+(28, 'C', 'A003', 2),
+(29, 'C', 'A003', 2),
+(30, 'C', 'A003', 2);
+
+
+-- Asientos para el avión A004 (Boeing 737)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A004', 2),
+(2, 'A', 'A004', 2),
+(3, 'A', 'A004', 2),
+(4, 'A', 'A004', 2),
+(5, 'A', 'A004', 2),
+(6, 'A', 'A004', 2),
+(7, 'A', 'A004', 2),
+(8, 'A', 'A004', 2),
+(9, 'A', 'A004', 2),
+(10, 'A', 'A004', 2),
+(11, 'B', 'A004', 2),
+(12, 'B', 'A004', 2),
+(13, 'B', 'A004', 2),
+(14, 'B', 'A004', 2),
+(15, 'B', 'A004', 2),
+(16, 'B', 'A004', 2),
+(17, 'B', 'A004', 2),
+(18, 'B', 'A004', 2),
+(19, 'B', 'A004', 2),
+(20, 'B', 'A004', 2),
+(21, 'C', 'A004', 2),
+(22, 'C', 'A004', 2),
+(23, 'C', 'A004', 2),
+(24, 'C', 'A004', 2),
+(25, 'C', 'A004', 2),
+(26, 'C', 'A004', 2),
+(27, 'C', 'A004', 2),
+(28, 'C', 'A004', 2),
+(29, 'C', 'A004', 2),
+(30, 'C', 'A004', 2);
+
+
+-- Asientos para el avión A005 (Boeing 787)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A005', 3),
+(2, 'A', 'A005', 3),
+(3, 'B', 'A005', 3),
+(4, 'B', 'A005', 3),
+(5, 'C', 'A005', 3),
+(6, 'C', 'A005', 3),
+(7, 'D', 'A005', 3),
+(8, 'D', 'A005', 3),
+(9, 'E', 'A005', 3),
+(10, 'E', 'A005', 3),
+(11, 'F', 'A005', 3),
+(12, 'F', 'A005', 3),
+(13, 'G', 'A005', 3),
+(14, 'G', 'A005', 3),
+(15, 'H', 'A005', 3);
+
+
+-- Asientos para el avión A006 (Airbus A350)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A006', 3),
+(2, 'A', 'A006', 3),
+(3, 'B', 'A006', 3),
+(4, 'B', 'A006', 3),
+(5, 'C', 'A006', 3),
+(6, 'C', 'A006', 3),
+(7, 'D', 'A006', 3),
+(8, 'D', 'A006', 3),
+(9, 'E', 'A006', 3),
+(10, 'E', 'A006', 3),
+(11, 'F', 'A006', 3),
+(12, 'F', 'A006', 3),
+(13, 'G', 'A006', 3),
+(14, 'G', 'A006', 3),
+(15, 'H', 'A006', 3);
+
+
+-- Asientos para el avión A007 (Embraer E195)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A007', 4),
+(2, 'A', 'A007', 4),
+(3, 'B', 'A007', 4),
+(4, 'B', 'A007', 4),
+(5, 'C', 'A007', 4),
+(6, 'C', 'A007', 4),
+(7, 'D', 'A007', 4),
+(8, 'D', 'A007', 4),
+(9, 'E', 'A007', 4),
+(10, 'E', 'A007', 4),
+(11, 'F', 'A007', 4),
+(12, 'F', 'A007', 4),
+(13, 'G', 'A007', 4),
+(14, 'G', 'A007', 4),
+(15, 'H', 'A007', 4);
+
+-- Asientos para el avión A008 (Boeing 767)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A008', 4),
+(2, 'A', 'A008', 4),
+(3, 'B', 'A008', 4),
+(4, 'B', 'A008', 4),
+(5, 'C', 'A008', 4),
+(6, 'C', 'A008', 4),
+(7, 'D', 'A008', 4),
+(8, 'D', 'A008', 4),
+(9, 'E', 'A008', 4),
+(10, 'E', 'A008', 4),
+(11, 'F', 'A008', 4),
+(12, 'F', 'A008', 4),
+(13, 'G', 'A008', 4),
+(14, 'G', 'A008', 4),
+(15, 'H', 'A008', 4);
+
+-- Asientos para el avión A009 (Airbus A321)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A009', 5),
+(2, 'A', 'A009', 5),
+(3, 'B', 'A009', 5),
+(4, 'B', 'A009', 5),
+(5, 'C', 'A009', 5),
+(6, 'C', 'A009', 5),
+(7, 'D', 'A009', 5),
+(8, 'D', 'A009', 5),
+(9, 'E', 'A009', 5),
+(10, 'E', 'A009', 5),
+(11, 'F', 'A009', 5),
+(12, 'F', 'A009', 5),
+(13, 'G', 'A009', 5),
+(14, 'G', 'A009', 5),
+(15, 'H', 'A009', 5);
+
+-- Asientos para el avión A010 (Boeing 757)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A010', 5),
+(2, 'A', 'A010', 5),
+(3, 'B', 'A010', 5),
+(4, 'B', 'A010', 5),
+(5, 'C', 'A010', 5),
+(6, 'C', 'A010', 5),
+(7, 'D', 'A010', 5),
+(8, 'D', 'A010', 5),
+(9, 'E', 'A010', 5),
+(10, 'E', 'A010', 5),
+(11, 'F', 'A010', 5),
+(12, 'F', 'A010', 5),
+(13, 'G', 'A010', 5),
+(14, 'G', 'A010', 5),
+(15, 'H', 'A010', 5);
+
+-- Asientos para el avión A011 (Boeing 737)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A011', 6),
+(2, 'A', 'A011', 6),
+(3, 'B', 'A011', 6),
+(4, 'B', 'A011', 6),
+(5, 'C', 'A011', 6),
+(6, 'C', 'A011', 6),
+(7, 'D', 'A011', 6),
+(8, 'D', 'A011', 6),
+(9, 'E', 'A011', 6),
+(10, 'E', 'A011', 6),
+(11, 'F', 'A011', 6),
+(12, 'F', 'A011', 6),
+(13, 'G', 'A011', 6),
+(14, 'G', 'A011', 6),
+(15, 'H', 'A011', 6);
+
+-- Asientos para el avión A012 (Airbus A320)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A012', 6),
+(2, 'A', 'A012', 6),
+(3, 'B', 'A012', 6),
+(4, 'B', 'A012', 6),
+(5, 'C', 'A012', 6),
+(6, 'C', 'A012', 6),
+(7, 'D', 'A012', 6),
+(8, 'D', 'A012', 6),
+(9, 'E', 'A012', 6),
+(10, 'E', 'A012', 6),
+(11, 'F', 'A012', 6),
+(12, 'F', 'A012', 6),
+(13, 'G', 'A012', 6),
+(14, 'G', 'A012', 6),
+(15, 'H', 'A012', 6);
+
+-- Asientos para el avión A013 (Airbus A330)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A013', 7),
+(2, 'A', 'A013', 7),
+(3, 'B', 'A013', 7),
+(4, 'B', 'A013', 7),
+(5, 'C', 'A013', 7),
+(6, 'C', 'A013', 7),
+(7, 'D', 'A013', 7),
+(8, 'D', 'A013', 7),
+(9, 'E', 'A013', 7),
+(10, 'E', 'A013', 7),
+(11, 'F', 'A013', 7),
+(12, 'F', 'A013', 7),
+(13, 'G', 'A013', 7),
+(14, 'G', 'A013', 7),
+(15, 'H', 'A013', 7);
+
+-- Asientos para el avión A014 (Boeing 747)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A014', 7),
+(2, 'A', 'A014', 7),
+(3, 'B', 'A014', 7),
+(4, 'B', 'A014', 7),
+(5, 'C', 'A014', 7),
+(6, 'C', 'A014', 7),
+(7, 'D', 'A014', 7),
+(8, 'D', 'A014', 7),
+(9, 'E', 'A014', 7),
+(10, 'E', 'A014',7),
+(11, 'F', 'A014', 7),
+(12, 'F', 'A014', 7),
+(13, 'G', 'A014', 7),
+(14, 'G', 'A014', 7),
+(15, 'H', 'A014', 7);
+
+-- Asientos para el avión A015 (Embraer 190)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A015', 8),
+(2, 'A', 'A015', 8),
+(3, 'B', 'A015', 8),
+(4, 'B', 'A015', 8),
+(5, 'C', 'A015', 8),
+(6, 'C', 'A015', 8),
+(7, 'D', 'A015', 8),
+(8, 'D', 'A015', 8),
+(9, 'E', 'A015', 8),
+(10, 'E', 'A015', 8),
+(11, 'F', 'A015', 8),
+(12, 'F', 'A015', 8),
+(13, 'G', 'A015', 8),
+(14, 'G', 'A015', 8),
+(15, 'H', 'A015', 8);
+
+-- Asientos para el avión A016 (Airbus A350)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A016', 8),
+(2, 'A', 'A016', 8),
+(3, 'B', 'A016', 8),
+(4, 'B', 'A016', 8),
+(5, 'C', 'A016', 8),
+(6, 'C', 'A016', 8),
+(7, 'D', 'A016', 8),
+(8, 'D', 'A016', 8),
+(9, 'E', 'A016', 8),
+(10, 'E', 'A016', 8),
+(11, 'F', 'A016', 8),
+(12, 'F', 'A016', 8),
+(13, 'G', 'A016', 8),
+(14, 'G', 'A016', 8),
+(15, 'H', 'A016', 8);
+
+-- Asientos para el avión A017 (Airbus A310)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A017', 9),
+(2, 'A', 'A017', 9),
+(3, 'B', 'A017', 9),
+(4, 'B', 'A017', 9),
+(5, 'C', 'A017', 9),
+(6, 'C', 'A017', 9),
+(7, 'D', 'A017', 9),
+(8, 'D', 'A017', 9),
+(9, 'E', 'A017', 9),
+(10, 'E', 'A017', 9),
+(11, 'F', 'A017', 9),
+(12, 'F', 'A017', 9),
+(13, 'G', 'A017',9),
+(14, 'G', 'A017', 9),
+(15, 'H', 'A017', 9);
+
+-- Asientos para el avión A018 (Boeing 777)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A018', 9),
+(2, 'A', 'A018', 9),
+(3, 'B', 'A018', 9),
+(4, 'B', 'A018', 9),
+(5, 'C', 'A018', 9),
+(6, 'C', 'A018', 9),
+(7, 'D', 'A018', 9),
+(8, 'D', 'A018', 9),
+(9, 'E', 'A018', 9),
+(10, 'E', 'A018', 9),
+(11, 'F', 'A018', 9),
+(12, 'F', 'A018', 9),
+(13, 'G', 'A018', 9),
+(14, 'G', 'A018', 9),
+(15, 'H', 'A018', 9);
+
+-- Asientos para el avión A019 
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A019', 10),
+(2, 'A', 'A019', 10),
+(3, 'B', 'A019', 10),
+(4, 'B', 'A019', 10),
+(5, 'C', 'A019', 10),
+(6, 'C', 'A019', 10),
+(7, 'D', 'A019', 10),
+(8, 'D', 'A019', 10),
+(9, 'E', 'A019', 10),
+(10, 'E', 'A019', 10),
+(11, 'F', 'A019', 10),
+(12, 'F', 'A019', 10),
+(13, 'G', 'A019', 10),
+(14, 'G', 'A019', 10),
+(15, 'H', 'A019', 10);
+
+-- Asientos para el avión A020 (Boeing 737)
+INSERT INTO asientos (numero, letra, id_avion, id_aerolinea) VALUES
+(1, 'A', 'A020', 10),
+(2, 'A', 'A020', 10),
+(3, 'B', 'A020', 10),
+(4, 'B', 'A020', 10),
+(5, 'C', 'A020', 10),
+(6, 'C', 'A020', 10),
+(7, 'D', 'A020', 10),
+(8, 'D', 'A020', 10),
+(9, 'E', 'A020', 10),
+(10, 'E', 'A020', 10),
+(11, 'F', 'A020', 10),
+(12, 'F', 'A020', 10),
+(13, 'G', 'A020', 10),
+(14, 'G', 'A020', 10),
+(15, 'H', 'A020', 10);
+
+
+
+
+-- Vuelos (con control de terminales y puertas)
+-- Vuelos nacionales desde España (T1)
+INSERT INTO vuelos (id, fecha_salida, fecha_llegada, estado, id_puerta_embarque, id_terminal, id_pais_origen, id_ciudad_origen, id_pais_destino, id_ciudad_destino, observaciones,id_avion,id_aerolinea) 
+VALUES
+('VSA001', CONVERT(DATETIME, '2025-05-21 09:00:00', 120), CONVERT(DATETIME, '2025-05-21 09:30:00', 120), 'Scheduled', 'A1', 'T1', 'ESP', 'MAD', 'ESP', 'BAR', 'Vuelo nacional desde Madrid hacia Barcelona','A017','9'),
+('VSA002', CONVERT(DATETIME, '2025-05-21 12:00:00', 120), CONVERT(DATETIME, '2025-05-21 12:30:00', 120), 'Scheduled', 'A2', 'T1', 'ESP', 'MAD', 'ESP', 'BAR', 'Vuelo nacional desde Madrid hacia Barcelona','A035','18'),
+('VSA003', CONVERT(DATETIME, '2025-05-21 16:30:00', 120), CONVERT(DATETIME, '2025-05-21 17:00:00', 120), 'Scheduled', 'A3', 'T1', 'ESP', 'MAD', 'ESP', 'BAR', 'Vuelo nacional desde Madrid hacia Barcelona','A034','18'),
+('VSA004', CONVERT(DATETIME, '2025-05-21 20:30:00', 120), CONVERT(DATETIME, '2025-05-21 21:00:00', 120), 'Scheduled', 'B2', 'T1', 'ESP', 'MAD', 'ESP', 'BAR', 'Vuelo nacional desde Madrid hacia Barcelona','A033','18'),
+
+-- Vuelos europeos (T2)
+('VSA007', CONVERT(DATETIME, '2025-05-21 14:00:00', 120), CONVERT(DATETIME, '2025-05-21 16:30:00', 120), 'Scheduled', 'C1', 'T2', 'ESP', 'MAD', 'FRA', 'PAR', 'Vuelo europeo desde Madrid hacia Paris','A024','12'),
+('VSA008', CONVERT(DATETIME, '2025-05-21 15:00:00', 120), CONVERT(DATETIME, '2025-05-21 17:30:00', 120), 'Scheduled', 'C2', 'T2', 'ESP', 'MAD', 'ITA', 'ROM', 'Vuelo europeo desde Madrid hacia Roma','A023','12'),
+('VSA009', CONVERT(DATETIME, '2025-05-21 16:30:00', 120), CONVERT(DATETIME, '2025-05-21 19:00:00', 120), 'Scheduled', 'C3', 'T2', 'ESP', 'MAD', 'ING', 'LON', 'Vuelo europeo desde Madrid hacia Londres','A026','13'),
+('VSA010', CONVERT(DATETIME, '2025-05-21 17:00:00', 120), CONVERT(DATETIME, '2025-05-21 19:30:00', 120), 'Scheduled', 'D1', 'T2', 'ESP', 'MAD', 'BEL', 'BRU', 'Vuelo europeo desde Madrid hacia Bruselas','A027','14'),
+('VSA011', CONVERT(DATETIME, '2025-05-21 18:00:00', 120), CONVERT(DATETIME, '2025-05-21 20:30:00', 120), 'Scheduled', 'D2', 'T2', 'ESP', 'MAD', 'NED', 'AMS', 'Vuelo europeo desde Madrid hacia Amsterdam','A032','18'),
+
+-- Vuelos internacionales (T3 y T4) saliendo desde Madrid hacia los respectivos destinos
+('VSA013', CONVERT(DATETIME, '2025-05-21 20:30:00', 120), CONVERT(DATETIME, '2025-05-22 03:00:00', 120), 'Scheduled', 'E1', 'T3', 'ESP', 'MAD', 'USA', 'NYC', 'Vuelo internacional desde Madrid hacia Nueva York','A019','10'),
+('VSA014', CONVERT(DATETIME, '2025-05-21 21:00:00', 120), CONVERT(DATETIME, '2025-05-22 23:30:00', 120), 'Scheduled', 'E2', 'T3', 'ESP', 'MAD', 'PER', 'LIM', 'Vuelo internacional desde Madrid hacia Tokio','A022','11'),
+('VSA015', CONVERT(DATETIME, '2025-05-21 22:00:00', 120), CONVERT(DATETIME, '2025-05-22 14:30:00', 120), 'Scheduled', 'E3', 'T3', 'ESP', 'MAD', 'ARG', 'BAS', 'Vuelo internacional desde Madrid hacia Buenos Aires','A001','1'),
+
+-- Vuelos internacionales (T4) saliendo desde Madrid hacia los respectivos destinos
+('VSA016', CONVERT(DATETIME, '2025-05-21 23:30:00', 120), CONVERT(DATETIME, '2025-05-22 12:00:00', 120), 'Scheduled', 'I1', 'T4', 'ESP', 'MAD', 'BRA', 'RIB', 'Vuelo internacional desde Madrid hacia Río de Janeiro','A003','2'),
+('VSA017', CONVERT(DATETIME, '2025-05-22 01:00:00', 120), CONVERT(DATETIME, '2025-05-22 13:30:00', 120), 'Scheduled', 'I2', 'T4', 'ESP', 'MAD', 'MEX', 'GDL', 'Vuelo internacional desde Madrid hacia Guadalajara','A013','7'),
+('VSA018', CONVERT(DATETIME, '2025-05-22 02:30:00', 120), CONVERT(DATETIME, '2025-05-22 15:00:00', 120), 'Scheduled', 'I3', 'T4', 'ESP', 'MAD', 'CAN', 'TOR', 'Vuelo internacional desde Madrid hacia Toronto','A021','11'),
+('VSA019', CONVERT(DATETIME, '2025-05-22 04:00:00', 120), CONVERT(DATETIME, '2025-05-22 16:30:00', 120), 'Scheduled', 'J1', 'T4', 'ESP', 'MAD', 'ARG', 'BAS', 'Vuelo internacional desde Madrid hacia Buenos Aires','A009','5'),
+('VSA020', CONVERT(DATETIME, '2025-05-22 05:00:00', 120), CONVERT(DATETIME, '2025-05-22 17:30:00', 120), 'Scheduled', 'J2', 'T4', 'ESP', 'MAD', 'MEX', 'CMX', 'Vuelo internacional desde Madrid hacia Ciudad de México','A014','7'),
+('VSA021', CONVERT(DATETIME, '2025-05-22 06:30:00', 120), CONVERT(DATETIME, '2025-05-22 09:00:00', 120), 'Scheduled', 'J3', 'T4', 'ESP', 'MAD', 'ALE', 'BER', 'Vuelo internacional desde Madrid hacia Berlin','A028','14');
+
+
+
+
+INSERT INTO vuelos (id, fecha_salida, fecha_llegada, estado, id_puerta_embarque, id_terminal, id_pais_origen, id_ciudad_origen, id_pais_destino, id_ciudad_destino, observaciones,id_avion,id_aerolinea) 
+VALUES
+-- Vuelos internacionales (T3 y T4) llegando a Madrid desde los respectivos destinos (una semana después)
+('VLA013', CONVERT(DATETIME, '2025-05-28 18:30:00', 120), CONVERT(DATETIME, '2025-05-29 01:00:00', 120), 'Scheduled', 'E1', 'T3',  'USA', 'NYC','ESP', 'MAD', 'Vuelo internacional desde Nueva York hacia Madrid','A020','10'),
+('VLA014', CONVERT(DATETIME, '2025-05-21 19:00:00', 120), CONVERT(DATETIME, '2025-05-21 20:30:00', 120), 'Scheduled', 'E2', 'T3',  'ITA', 'ROM', 'ESP', 'MAD','Vuelo internacional desde Roma hacia Madrid','A029','18'),
+('VLA015', CONVERT(DATETIME, '2025-05-20 20:00:00', 120), CONVERT(DATETIME, '2025-05-21 04:30:00', 120), 'Scheduled', 'E3', 'T3', 'CAN', 'TOR', 'ESP', 'MAD','Vuelo internacional desde Toronto hacia Madrid','A011','6'),
+
+-- Vuelos internacionales (T4) llegando a Madrid desde los respectivos destinos (una semana después)
+('VLA016', CONVERT(DATETIME, '2025-05-28 22:30:00', 120), CONVERT(DATETIME, '2025-05-29 13:45:00', 120), 'Scheduled', 'I1', 'T4',  'BRA', 'RIB','ESP', 'MAD', 'Vuelo internacional desde Rio de Janeiro hacia Madrid','A004','2'),
+('VLA017', CONVERT(DATETIME, '2025-05-20 23:30:00', 120), CONVERT(DATETIME, '2025-05-21 11:00:00', 120), 'Scheduled', 'I2', 'T4', 'CHL', 'SCL', 'ESP', 'MAD','Vuelo internacional desde Santiago hacia Madrid','A012','6'),
+('VLA018', CONVERT(DATETIME, '2025-05-21 00:30:00', 120), CONVERT(DATETIME, '2025-05-21 09:00:00', 120), 'Scheduled', 'I3', 'T4',  'CAN', 'TOR', 'ESP', 'MAD','Vuelo internacional desde Toronto hacia Madrid','A007','4'),
+('VLA019', CONVERT(DATETIME, '2025-05-29 02:00:00', 120), CONVERT(DATETIME, '2025-05-29 16:30:00', 120), 'Scheduled', 'J1', 'T4',  'ARG', 'BAS', 'ESP', 'MAD','Vuelo internacional desde Buenos Aires hacia Madrid','A002','1'),
+('VLA020', CONVERT(DATETIME, '2025-05-21 03:00:00', 120), CONVERT(DATETIME, '2025-05-21 20:30:00', 120), 'Scheduled', 'J2', 'T4', 'MEX', 'CMX','ESP', 'MAD','Vuelo internacional desde Ciudad de México hacia Madrid','A015','8'),
+
+-- Vuelos europeos (T2) llegando a Madrid desde los respectivos destinos (una semana después)
+('VLA022', CONVERT(DATETIME, '2025-05-21 18:00:00', 120), CONVERT(DATETIME, '2025-05-21 19:30:00', 120), 'Scheduled', 'C1', 'T2',  'FRA', 'PAR','ESP', 'MAD', 'Vuelo europeo desde París hacia Madrid','A008','4'),
+('VLA023', CONVERT(DATETIME, '2025-05-21 20:00:00', 120), CONVERT(DATETIME, '2025-05-21 21:30:00', 120), 'Scheduled', 'C2', 'T2',  'ITA', 'ROM','ESP', 'MAD', 'Vuelo europeo desde Roma hacia Madrid','A016','8'),
+('VLA024', CONVERT(DATETIME, '2025-05-21 21:30:00', 120), CONVERT(DATETIME, '2025-05-21 23:00:00', 120), 'Scheduled', 'C3', 'T2',  'ALE', 'BER','ESP', 'MAD', 'Vuelo europeo desde Berlín hacia Madrid','A005','3'),
+('VLA025', CONVERT(DATETIME, '2025-05-21 00:00:00', 120), CONVERT(DATETIME, '2025-05-21 01:30:00', 120), 'Scheduled', 'D1', 'T2',  'ING', 'LON', 'ESP', 'MAD','Vuelo europeo desde Londres hacia Madrid','A025','13'),
+('VLA026', CONVERT(DATETIME, '2025-05-21 01:00:00', 120), CONVERT(DATETIME, '2025-05-21 02:30:00', 120), 'Scheduled', 'D2', 'T2',  'NED', 'AMS','ESP', 'MAD', 'Vuelo europeo desde Ámsterdam hacia Madrid','A006','3'),
+
+-- Vuelos nacionales (T1) llegando a Madrid desde las respectivas ciudades (una semana después)
+('VLA027', CONVERT(DATETIME, '2025-05-28 14:30:00', 120), CONVERT(DATETIME, '2025-05-28 16:00:00', 120), 'Scheduled', 'A1', 'T1', 'ESP', 'BAR','ESP', 'MAD', 'Vuelo nacional desde Barcelona hacia Madrid','A018','9'),
+('VLA028', CONVERT(DATETIME, '2025-05-21 15:30:00', 120), CONVERT(DATETIME, '2025-05-21 17:00:00', 120), 'Scheduled', 'A2', 'T1',  'ESP', 'BAR','ESP', 'MAD', 'Vuelo nacional desde Barcelona hacia Madrid','A010','5'),
+('VLA029', CONVERT(DATETIME, '2025-05-21 17:30:00', 120), CONVERT(DATETIME, '2025-05-21 19:00:00', 120), 'Scheduled', 'A3', 'T1', 'ESP', 'BAR', 'ESP', 'MAD','Vuelo nacional desde Barcelona hacia Madrid','A030','18'),
+('VLA030', CONVERT(DATETIME, '2025-05-21 18:30:00', 120), CONVERT(DATETIME, '2025-05-21 20:00:00', 120), 'Scheduled', 'B1', 'T1',  'ESP', 'BAR','ESP', 'MAD', 'Vuelo nacional desde Barcelona hacia Madrid','A031','18');
+
+
+
+--ASIENTOS_VUELOS DEL VUELO VSA015 DIRECCION ARGENTINA IDA
+INSERT INTO asientos_vuelos (numero, letra, id_avion, id_aerolinea, tipo, id_vuelo, precio, estado)
+VALUES
+(1, 'A', 'A001', 1, 'business', 'VSA015', 700.00, 'available'),
+(2, 'A', 'A001', 1, 'business', 'VSA015', 700.00, 'available'),
+(3, 'A', 'A001', 1, 'business', 'VSA015', 700.00, 'available'),
+(4, 'A', 'A001', 1, 'business', 'VSA015', 700.00, 'available'),
+(5, 'A', 'A001', 1, 'business', 'VSA015', 700.00, 'available'),
+(6, 'A', 'A001', 1, 'business', 'VSA015', 700.00, 'available'),
+(7, 'A', 'A001', 1, 'first class', 'VSA015', 600.00, 'available'),
+(8, 'A', 'A001', 1, 'first class', 'VSA015', 600.00, 'available'),
+(9, 'A', 'A001', 1, 'first class', 'VSA015', 600.00, 'available'),
+(10, 'A', 'A001', 1, 'first class', 'VSA015', 600.00, 'available'),
+(11, 'B', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(12, 'B', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(13, 'B', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(14, 'B', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(15, 'B', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(16, 'B', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(17, 'B', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(18, 'B', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(19, 'B', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(20, 'B', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(21, 'C', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(22, 'C', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(23, 'C', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(24, 'C', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(25, 'C', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(26, 'C', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(27, 'C', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(28, 'C', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(29, 'C', 'A001', 1, 'economy', 'VSA015', 500.00, 'available'),
+(30, 'C', 'A001', 1, 'economy', 'VSA015', 500.00, 'available');
+
+
+
+--ASIENTOS_VUELOS DEL VUELO VLA01 DIRECCION ARGENTINA VUELTA
+INSERT INTO asientos_vuelos (numero, letra, id_avion, id_aerolinea, tipo, id_vuelo, precio, estado)
+VALUES
+(1, 'A', 'A002', 1, 'business', 'VLA019', 700.00, 'available'),
+(2, 'A', 'A002', 1, 'business', 'VLA019', 700.00, 'available'),
+(3, 'A', 'A002', 1, 'business', 'VLA019', 700.00, 'available'),
+(4, 'A', 'A002', 1, 'business', 'VLA019', 700.00, 'available'),
+(5, 'A', 'A002', 1, 'business', 'VLA019', 700.00, 'available'),
+(6, 'A', 'A002', 1, 'business', 'VLA019', 700.00, 'available'),
+(7, 'A', 'A002', 1, 'first class', 'VLA019', 600.00, 'available'),
+(8, 'A', 'A002', 1, 'first class', 'VLA019', 600.00, 'available'),
+(9, 'A', 'A002', 1, 'first class', 'VLA019', 600.00, 'available'),
+(10, 'A', 'A002', 1, 'first class', 'VLA019', 600.00, 'available'),
+(11, 'B', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(12, 'B', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(13, 'B', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(14, 'B', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(15, 'B', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(16, 'B', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(17, 'B', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(18, 'B', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(19, 'B', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(20, 'B', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(21, 'C', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(22, 'C', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(23, 'C', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(24, 'C', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(25, 'C', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(26, 'C', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(27, 'C', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(28, 'C', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(29, 'C', 'A002', 1, 'economy', 'VLA019', 500.00, 'available'),
+(30, 'C', 'A002', 1, 'economy', 'VLA019', 500.00, 'available');
+
+
+--ASIENTOS_VUELOS DEL VUELO VSA001 DIRECCION BARCELONA IDA
+INSERT INTO asientos_vuelos (numero, letra, id_avion, id_aerolinea, tipo, id_vuelo, precio, estado)
+VALUES
+(1, 'A', 'A017', 9, 'economy', 'VSA001', 150.00, 'available'),
+(2, 'A', 'A017', 9, 'economy', 'VSA001', 150.00, 'available'),
+(3, 'B', 'A017', 9, 'economy', 'VSA001', 150.00, 'available'),
+(4, 'B', 'A017', 9, 'economy', 'VSA001', 150.00, 'available'),
+(5, 'C', 'A017', 9, 'economy', 'VSA001', 150.00, 'available'),
+(6, 'C', 'A017', 9, 'economy', 'VSA001', 150.00, 'available'),
+(7, 'D', 'A017', 9, 'economy', 'VSA001', 150.00, 'available'),
+(8, 'D', 'A017', 9, 'economy', 'VSA001', 150.00, 'available'),
+(9, 'E', 'A017', 9, 'economy', 'VSA001', 150.00, 'available'),
+(10, 'E', 'A017', 9, 'economy', 'VSA001', 150.00, 'available'),
+(11, 'F', 'A017', 9, 'economy', 'VSA001', 150.00, 'available'),
+(12, 'F', 'A017', 9, 'economy', 'VSA001', 150.00, 'available'),
+(13, 'G', 'A017', 9, 'economy', 'VSA001', 150.00, 'available'),
+(14, 'G', 'A017', 9, 'economy', 'VSA001', 150.00, 'available'),
+(15, 'H', 'A017', 9, 'economy', 'VSA001', 150.00, 'available');
+
+
+--ASIENTOS_VUELOS DEL VUELO VSA027 DIRECCION BARCELONA VUELTA
+INSERT INTO asientos_vuelos (numero, letra, id_avion, id_aerolinea, tipo, id_vuelo, precio, estado)
+VALUES
+(1, 'A', 'A018', 9, 'economy', 'VLA027', 150.00, 'available'),
+(2, 'A', 'A018', 9, 'economy', 'VLA027', 150.00, 'available'),
+(3, 'B', 'A018', 9, 'economy', 'VLA027', 150.00, 'available'),
+(4, 'B', 'A018', 9, 'economy', 'VLA027', 150.00, 'available'),
+(5, 'C', 'A018', 9, 'economy', 'VLA027', 150.00, 'available'),
+(6, 'C', 'A018', 9, 'economy', 'VLA027', 150.00, 'available'),
+(7, 'D', 'A018', 9, 'economy', 'VLA027', 150.00, 'available'),
+(8, 'D', 'A018', 9, 'economy', 'VLA027', 150.00, 'available'),
+(9, 'E', 'A018', 9, 'economy', 'VLA027', 150.00, 'available'),
+(10, 'E', 'A018', 9, 'economy', 'VLA027', 150.00, 'available'),
+(11, 'F', 'A018', 9, 'economy', 'VLA027', 150.00, 'available'),
+(12, 'F', 'A018', 9, 'economy', 'VLA027', 150.00, 'available'),
+(13, 'G', 'A018', 9, 'economy', 'VLA027', 150.00, 'available'),
+(14, 'G', 'A018', 9, 'economy', 'VLA027', 150.00, 'available'),
+(15, 'H', 'A018', 9, 'economy', 'VLA027', 150.00, 'available');
+
+
+
+
+--vuelo salida a Brasil ida
+INSERT INTO asientos_vuelos (numero, letra, id_avion, id_aerolinea, tipo, id_vuelo, precio, estado)
+VALUES
+(1, 'A', 'A003', 2, 'business', 'VSA016', 700.00, 'available'),
+(2, 'A', 'A003', 2, 'business', 'VSA016', 700.00, 'available'),
+(3, 'A', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(4, 'A', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(5, 'A', 'A003', 2, 'business', 'VSA016', 700.00, 'available'),
+(6, 'A', 'A003', 2, 'first class', 'VSA016', 600.00, 'available'),
+(7, 'A', 'A003', 2, 'first class', 'VSA016', 600.00, 'available'),
+(8, 'A', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(9, 'A', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(10, 'A', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(11, 'B', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(12, 'B', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(13, 'B', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(14, 'B', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(15, 'B', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(16, 'B', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(17, 'B', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(18, 'B', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(19, 'B', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(20, 'B', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(21, 'C', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(22, 'C', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(23, 'C', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(24, 'C', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(25, 'C', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(26, 'C', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(27, 'C', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(28, 'C', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(29, 'C', 'A003', 2, 'economy', 'VSA016', 500.00, 'available'),
+(30, 'C', 'A003', 2, 'economy', 'VSA016', 500.00, 'available');
+
+
+
+
+--vuelo salida a Brasil vuelta
+INSERT INTO asientos_vuelos (numero, letra, id_avion, id_aerolinea, tipo, id_vuelo, precio, estado)
+VALUES
+(1, 'A', 'A004', 2, 'business',  'VLA016', 700.00, 'available'),
+(2, 'A', 'A004', 2, 'business',  'VLA016', 700.00, 'available'),
+(3, 'A', 'A004', 2, 'economy','VLA016', 500.00, 'available'),
+(4, 'A', 'A004', 2, 'economy',  'VLA016', 500.00, 'available'),
+(5, 'A', 'A004', 2, 'business', 'VLA016', 700.00, 'available'),
+(6, 'A', 'A004', 2, 'first class',  'VLA016', 600.00, 'available'),
+(7, 'A', 'A004', 2, 'first class',  'VLA016', 600.00, 'available'),
+(8, 'A', 'A004', 2, 'economy',  'VLA016', 500.00, 'available'),
+(9, 'A', 'A004', 2, 'economy','VLA016', 500.00, 'available'),
+(10, 'A', 'A004', 2, 'economy',  'VLA016', 500.00, 'available'),
+(11, 'B', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(12, 'B', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(13, 'B', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(14, 'B', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(15, 'B', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(16, 'B', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(17, 'B', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(18, 'B', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(19, 'B', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(20, 'B', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(21, 'C', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(22, 'C', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(23, 'C', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(24, 'C', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(25, 'C', 'A004', 2, 'economy', 'VLA016', 500.00, 'available'),
+(26, 'C', 'A004', 2, 'economy',  'VLA016', 500.00, 'available'),
+(27, 'C', 'A004', 2, 'economy',  'VLA016', 500.00, 'available'),
+(28, 'C', 'A004', 2, 'economy',  'VLA016', 500.00, 'available'),
+(29, 'C', 'A004', 2, 'economy',  'VLA016', 500.00, 'available'),
+(30, 'C', 'A004', 2, 'economy',  'VLA016', 500.00, 'available');
+
+
+
+--vuelo salida a NY id
+INSERT INTO asientos_vuelos (numero, letra, id_avion, id_aerolinea, tipo, id_vuelo, precio, estado) 
+VALUES
+(1, 'A', 'A019', 10, 'business', 'VSA013',  400.00, 'available'),
+(2, 'A', 'A019', 10, 'business', 'VSA013',  400.00, 'available'),
+(3, 'B', 'A019', 10, 'business', 'VSA013',  400.00, 'available'),
+(4, 'B', 'A019', 10, 'first class', 'VSA013', 300.00, 'available'),
+(5, 'C', 'A019', 10, 'first class', 'VSA013',  300.00, 'available'),
+(6, 'C', 'A019', 10, 'economy', 'VSA013',  150.00, 'available'),
+(7, 'D', 'A019', 10, 'economy', 'VSA013',  150.00, 'available'),
+(8, 'D', 'A019', 10, 'economy', 'VSA013',  150.00, 'available'),
+(9, 'E', 'A019', 10, 'economy', 'VSA013',  150.00, 'available'),
+(10, 'E', 'A019', 10, 'economy', 'VSA013',  150.00, 'available'),
+(11, 'F', 'A019', 10, 'economy', 'VSA013',  150.00, 'available'),
+(12, 'F', 'A019', 10, 'economy', 'VSA013',  150.00, 'available'),
+(13, 'G', 'A019', 10, 'economy', 'VSA013',  150.00, 'available'),
+(14, 'G', 'A019', 10, 'economy', 'VSA013',  150.00, 'available'),
+(15, 'H', 'A019', 10, 'economy', 'VSA013',  150.00, 'available');
+--vuelo llegada de ny vuelta
+INSERT INTO asientos_vuelos (numero, letra, id_avion, id_aerolinea, tipo, id_vuelo, precio, estado) 
+VALUES
+(1, 'A', 'A020', 10, 'business', 'VLA013', 400.00, 'available'),
+(2, 'A', 'A020', 10, 'business', 'VLA013', 400.00, 'available'),
+(3, 'B', 'A020', 10, 'business', 'VLA013', 400.00, 'available'),
+(4, 'B', 'A020', 10, 'first class', 'VLA013', 300.00, 'available'),
+(5, 'C', 'A020', 10, 'first class', 'VLA013', 300.00, 'available'),
+(6, 'C', 'A020', 10, 'economy', 'VLA013', 150.00, 'available'),
+(7, 'D', 'A020', 10, 'economy', 'VLA013', 150.00, 'available'),
+(8, 'D', 'A020', 10, 'economy', 'VLA013', 150.00, 'available'),
+(9, 'E', 'A020', 10, 'economy', 'VLA013', 150.00, 'available'),
+(10, 'E', 'A020', 10, 'economy', 'VLA013', 150.00, 'available'),
+(11, 'F', 'A020', 10, 'economy', 'VLA013', 150.00, 'available'),
+(12, 'F', 'A020', 10, 'economy', 'VLA013', 150.00, 'available'),
+(13, 'G', 'A020', 10, 'economy', 'VLA013', 150.00, 'available'),
+(14, 'G', 'A020', 10, 'economy', 'VLA013', 150.00, 'available'),
+(15, 'H', 'A020', 10, 'economy', 'VLA013', 150.00, 'available');
+
+
+
+
+
+
+select v.id,c.nombre as origen, ci.nombre as destino,v.fecha_salida,v.fecha_llegada,v.estado,v.id_terminal,v.id as puerta_embarque,aerolinea.nombre,aerolinea.enlace_web,aviones.modelo
+from aerolíneas aerolinea
+join aviones aviones on aviones.id_aerolinea=aerolinea.id
+join vuelos v on v.id_avion=aviones.id and v.id_aerolinea=aviones.id_aerolinea
+join ciudades c on c.id=v.id_ciudad_origen and c.id_pais=v.id_pais_origen
+join ciudades ci on ci.id=v.id_ciudad_destino and ci.id_pais=v.id_pais_destino;
+
+
+SELECT 
+    r.dni_usuario,
+    p.continente,
+    COUNT(DISTINCT v.id_ciudad_destino) AS cantidad_ciudades_diferentes
+FROM reservas r
+INNER JOIN asientos_vuelos av ON r.id_asiento_vuelo = av.id
+INNER JOIN vuelos v ON av.id_vuelo = v.id
+INNER JOIN paises p ON v.id_pais_destino = p.id
+GROUP BY r.dni_usuario, p.continente
+ORDER BY r.dni_usuario, p.continente;
+
+
+
+CREATE TRIGGER tr_estado_vuelo_actualizado
+ON vuelos
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO notificaciones_vuelos (id_vuelo, fecha, titulo, descripción)
+    SELECT 
+        i.id,
+        GETDATE(),
+        'Status change close to your flight''s departure',
+        'Flight ' + i.id + ' has changed its status to ' + i.estado
+    FROM inserted i
+    WHERE DATEDIFF(MINUTE, GETDATE(), i.fecha_salida) BETWEEN 0 AND 60;
+END;
+
+
+
+
+
+
+
+
+
+
+
