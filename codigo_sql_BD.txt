@@ -15,11 +15,11 @@ CREATE TABLE puertas_embarques (
 
 create table paises(
 	id char(3) primary key,
-	nombre varchar(25)
+	nombre varchar(25),
+	continente varchar(20)
 );
 
-ALTER TABLE paises
-ADD continente varchar(20);
+
 
 create table ciudades(
 	id char(3),
@@ -96,8 +96,7 @@ create table asientos_vuelos(
 	estado varchar(50) default 'available',
 	constraint asiento_fk1 foreign key(numero,letra,id_avion,id_aerolinea) references 	asientos(numero,letra,id_avion,id_aerolinea) ON UPDATE CASCADE
         ON DELETE CASCADE,
-	constraint vuelo_fk2 foreign key(id_vuelo) references vuelos(id) ON UPDATE CASCADE
-        ON DELETE CASCADE,
+	constraint vuelo_fk2 foreign key(id_vuelo) references vuelos(id),
 	CONSTRAINT tipo_chk CHECK (tipo IN ('economy', 'first class', 'business')),
 	CONSTRAINT estado_chk2 CHECK (estado IN ('available', 'occupied', 'unavailable'))
 );
@@ -1047,28 +1046,7 @@ VALUES
 
 
 
-
-
-
-select v.id,c.nombre as origen, ci.nombre as destino,v.fecha_salida,v.fecha_llegada,v.estado,v.id_terminal,v.id as puerta_embarque,aerolinea.nombre,aerolinea.enlace_web,aviones.modelo
-from aerolíneas aerolinea
-join aviones aviones on aviones.id_aerolinea=aerolinea.id
-join vuelos v on v.id_avion=aviones.id and v.id_aerolinea=aviones.id_aerolinea
-join ciudades c on c.id=v.id_ciudad_origen and c.id_pais=v.id_pais_origen
-join ciudades ci on ci.id=v.id_ciudad_destino and ci.id_pais=v.id_pais_destino;
-
-
-SELECT 
-    r.dni_usuario,
-    p.continente,
-    COUNT(DISTINCT v.id_ciudad_destino) AS cantidad_ciudades_diferentes
-FROM reservas r
-INNER JOIN asientos_vuelos av ON r.id_asiento_vuelo = av.id
-INNER JOIN vuelos v ON av.id_vuelo = v.id
-INNER JOIN paises p ON v.id_pais_destino = p.id
-GROUP BY r.dni_usuario, p.continente
-ORDER BY r.dni_usuario, p.continente;
-
+GO
 
 
 CREATE TRIGGER tr_estado_vuelo_actualizado
